@@ -58,7 +58,7 @@ class PlayState extends FlxState
 
 		secondTimer = new FlxTimer().start(1, function(tmr:FlxTimer)
 		{
-			cookieAdd(perSecond);
+			microphoneAdd(perSecond);
 			secondTimer.reset(1);
 		});
 	}
@@ -116,7 +116,25 @@ class PlayState extends FlxState
 
 	function doMicPressedStuff()
 	{
-		cookieAdd(1);
+		microphoneAdd(1);
+
+		var smallMic:FlxSprite = new FlxSprite().loadGraphic("assets/images/microphone.png");
+		smallMic.scale.set(0.2, 0.2);
+		smallMic.updateHitbox();
+		add(smallMic);
+		smallMic.setPosition(FlxG.mouse.x, FlxG.mouse.y);
+		smallMic.acceleration.y = 550;
+		smallMic.velocity.y -= 140;
+		smallMic.angularVelocity = 240;
+		smallMic.velocity.x = FlxG.random.int(-110, 110);
+
+		FlxTween.tween(smallMic, {alpha: 0}, 1, {
+			onComplete: (twn) ->
+			{
+				smallMic.destroy();
+				remove(smallMic);
+			}
+		});
 
 		var text:FlxText = new FlxText(FlxG.mouse.x, FlxG.mouse.y, 0, "+1", 32);
 		add(text);
@@ -146,7 +164,7 @@ class PlayState extends FlxState
 		trace(ini["data"]["ps"] + " - " + FlxG.save.data.perSec);
 	}
 
-	function cookieAdd(addAmount:Float)
+	function microphoneAdd(addAmount:Float)
 	{
 		micPresses += addAmount;
 		pressesText.text = "game by isophoro - mics: " + Std.int(micPresses) + '\nmics per second: $perSecond';
