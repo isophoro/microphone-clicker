@@ -118,6 +118,8 @@ class PlayState extends FlxState
 	{
 		microphoneAdd(1);
 
+		FlxG.sound.play("assets/sounds/clicked.wav");
+
 		var smallMic:FlxSprite = new FlxSprite().loadGraphic("assets/images/microphone.png");
 		smallMic.scale.set(0.2, 0.2);
 		smallMic.updateHitbox();
