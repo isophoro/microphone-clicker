@@ -7,6 +7,7 @@ import flixel.text.FlxText;
 import flixel.tweens.FlxEase;
 import flixel.tweens.FlxTween;
 import flixel.util.FlxColor;
+import flixel.util.FlxTimer;
 import hxIni.IniManager;
 import sys.FileSystem;
 
@@ -14,8 +15,12 @@ class PlayState extends FlxState
 {
 	var bg:FlxSprite;
 	var mic:FlxSprite;
-	var micPresses:Float = 0;
 	var pressesText:FlxText;
+
+	var micPresses:Float = 0;
+	var perSecond:Float = 0;
+
+	var secondTimer:FlxTimer;
 
 	override public function create()
 	{
@@ -29,9 +34,10 @@ class PlayState extends FlxState
 
 		var ini:Ini = IniManager.loadFromFile("save.ini");
 		micPresses = Std.parseFloat(ini["data"]["presses"]);
+		perSecond = Std.parseFloat(ini["data"]["ps"]);
 
 		trace(ini["data"]["presses"] + " - " + FlxG.save.data.mics);
-		if (ini["data"]["presses"] != FlxG.save.data.mics) // ehehehee
+		if (ini["data"]["presses"] != FlxG.save.data.mics || ini["data"]["ps"] != FlxG.save.data.perSec) // ehehehee
 		{
 			FileSystem.deleteFile("save.ini");
 			FlxG.save.erase();
@@ -48,7 +54,13 @@ class PlayState extends FlxState
 		mic.updateHitbox();
 		mic.screenCenter(Y);
 
-		add(pressesText = new FlxText(5, 5, 0, "game by isophoro - mics: " + micPresses, 32)); // placeholder
+		add(pressesText = new FlxText(5, 5, 0, "game by isophoro - mics: " + Std.int(micPresses) + '\nmics per second: $perSecond', 32)); // placeholder
+
+		secondTimer = new FlxTimer().start(1, function(tmr:FlxTimer)
+		{
+			cookieAdd(perSecond);
+			secondTimer.reset(1);
+		});
 	}
 
 	private var canClick(default, set):Bool = false;
@@ -56,6 +68,13 @@ class PlayState extends FlxState
 
 	override public function update(elapsed:Float)
 	{
+		if (FlxG.keys.justPressed.P && micPresses >= 25)
+		{
+			micPresses -= 25;
+			perSecondAdd(999);
+			trace("bought !");
+		}
+
 		micMouseCheck();
 
 		super.update(elapsed);
@@ -97,20 +116,7 @@ class PlayState extends FlxState
 
 	function doMicPressedStuff()
 	{
-		micPresses++;
-		pressesText.text = "game by isophoro - mics: " + micPresses;
-
-		// ooo ini..
-		checkSaveIni();
-		var ini:Ini = IniManager.loadFromFile("save.ini");
-		ini["data"]["presses"] = Std.string(micPresses);
-		IniManager.writeToFile(ini, "save.ini");
-
-		checkSaveFlxG();
-		FlxG.save.data.mics = micPresses;
-		FlxG.save.flush();
-
-		trace(ini["data"]["presses"] + " - " + FlxG.save.data.mics);
+		cookieAdd(1);
 
 		var text:FlxText = new FlxText(FlxG.mouse.x, FlxG.mouse.y, 0, "+1", 32);
 		add(text);
@@ -123,10 +129,47 @@ class PlayState extends FlxState
 		});
 	}
 
+	function perSecondAdd(addAmount:Float)
+	{
+		perSecond += addAmount;
+		pressesText.text = "game by isophoro - mics: " + Std.int(micPresses) + '\nmics per second: $perSecond';
+
+		checkSaveIni();
+		var ini:Ini = IniManager.loadFromFile("save.ini");
+		ini["data"]["ps"] = Std.string(perSecond);
+		IniManager.writeToFile(ini, "save.ini");
+
+		checkSaveFlxG();
+		FlxG.save.data.perSec = perSecond;
+		FlxG.save.flush();
+
+		trace(ini["data"]["ps"] + " - " + FlxG.save.data.perSec);
+	}
+
+	function cookieAdd(addAmount:Float)
+	{
+		micPresses += addAmount;
+		pressesText.text = "game by isophoro - mics: " + Std.int(micPresses) + '\nmics per second: $perSecond';
+
+		checkSaveIni();
+		var ini:Ini = IniManager.loadFromFile("save.ini");
+		ini["data"]["presses"] = Std.string(micPresses);
+		IniManager.writeToFile(ini, "save.ini");
+
+		checkSaveFlxG();
+		FlxG.save.data.mics = micPresses;
+		FlxG.save.flush();
+
+		trace(ini["data"]["presses"] + " - " + FlxG.save.data.mics);
+	}
+
 	function checkSaveFlxG()
 	{
 		if (FlxG.save.data.mics == null)
 			FlxG.save.data.mics = 0;
+
+		if (FlxG.save.data.perSec == null)
+			FlxG.save.data.perSec = 0;
 
 		FlxG.save.flush();
 	}
@@ -135,7 +178,7 @@ class PlayState extends FlxState
 	{
 		if (!FileSystem.exists("save.ini"))
 		{
-			var ini:Ini = IniManager.loadFromString("[data]\npresses=0");
+			var ini:Ini = IniManager.loadFromString("[data]\npresses=0\nps=0");
 			IniManager.writeToFile(ini, "save.ini");
 		}
 	}
