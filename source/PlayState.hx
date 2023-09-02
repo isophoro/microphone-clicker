@@ -7,16 +7,24 @@ import flixel.text.FlxText;
 import flixel.tweens.FlxEase;
 import flixel.tweens.FlxTween;
 import flixel.util.FlxColor;
+import hxIni.IniManager;
+import sys.FileSystem;
 
 class PlayState extends FlxState
 {
 	var bg:FlxSprite;
 	var mic:FlxSprite;
 	var micPresses:Float = 0;
+	var pressesText:FlxText;
 
 	override public function create()
 	{
 		super.create();
+
+		checkSaveIni();
+
+		var ini:Ini = IniManager.loadFromFile("save.ini");
+		micPresses = Std.parseFloat(ini["data"]["presses"]);
 
 		add(bg = new FlxSprite(0, 0).makeGraphic(FlxG.width, FlxG.height, FlxColor.GRAY));
 
@@ -25,6 +33,8 @@ class PlayState extends FlxState
 		mic.angle = 26;
 		mic.updateHitbox();
 		mic.screenCenter(Y);
+
+		add(pressesText = new FlxText(5, 5, 0, "game by isophoro - mics: " + micPresses, 32)); // placeholder
 	}
 
 	private var canClick(default, set):Bool = false;
@@ -60,9 +70,7 @@ class PlayState extends FlxState
 				{
 					micPressed = false;
 					tweenMicScale(1.1, 1.1);
-					spawnEarnedTxt();
-					micPresses++;
-					trace(micPresses);
+					doMicPressedStuff();
 				}
 			}
 		}
@@ -73,8 +81,17 @@ class PlayState extends FlxState
 		}
 	}
 
-	function spawnEarnedTxt()
+	function doMicPressedStuff()
 	{
+		micPresses++;
+		pressesText.text = "game by isophoro - mics: " + micPresses;
+
+		// ooo ini..
+		checkSaveIni();
+		var ini:Ini = IniManager.loadFromFile("save.ini");
+		ini["data"]["presses"] = Std.string(micPresses);
+		IniManager.writeToFile(ini, "save.ini");
+
 		var text:FlxText = new FlxText(FlxG.mouse.x, FlxG.mouse.y, 0, "+1", 32);
 		add(text);
 		FlxTween.tween(text, {y: text.y - 100, alpha: 0}, 2, {
@@ -84,6 +101,15 @@ class PlayState extends FlxState
 				remove(text);
 			}
 		});
+	}
+
+	function checkSaveIni()
+	{
+		if (!FileSystem.exists("save.ini"))
+		{
+			var ini:Ini = IniManager.loadFromString("[data]\npresses=0");
+			IniManager.writeToFile(ini, "save.ini");
+		}
 	}
 
 	function tweenMicScale(daX:Float = 1, daY:Float = 1)
