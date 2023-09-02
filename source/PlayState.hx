@@ -21,10 +21,24 @@ class PlayState extends FlxState
 	{
 		super.create();
 
+		// ACTUAL save file
+		FlxG.save.bind("micClicker");
+
+		checkSaveFlxG();
 		checkSaveIni();
 
 		var ini:Ini = IniManager.loadFromFile("save.ini");
 		micPresses = Std.parseFloat(ini["data"]["presses"]);
+
+		trace(ini["data"]["presses"] + " - " + FlxG.save.data.mics);
+		if (ini["data"]["presses"] != FlxG.save.data.mics) // ehehehee
+		{
+			FileSystem.deleteFile("save.ini");
+			FlxG.save.erase();
+
+			FlxG.stage.window.alert("Cheated microphones aren't professional.");
+			Sys.exit(0);
+		}
 
 		add(bg = new FlxSprite(0, 0).makeGraphic(FlxG.width, FlxG.height, FlxColor.GRAY));
 
@@ -92,6 +106,12 @@ class PlayState extends FlxState
 		ini["data"]["presses"] = Std.string(micPresses);
 		IniManager.writeToFile(ini, "save.ini");
 
+		checkSaveFlxG();
+		FlxG.save.data.mics = micPresses;
+		FlxG.save.flush();
+
+		trace(ini["data"]["presses"] + " - " + FlxG.save.data.mics);
+
 		var text:FlxText = new FlxText(FlxG.mouse.x, FlxG.mouse.y, 0, "+1", 32);
 		add(text);
 		FlxTween.tween(text, {y: text.y - 100, alpha: 0}, 2, {
@@ -101,6 +121,14 @@ class PlayState extends FlxState
 				remove(text);
 			}
 		});
+	}
+
+	function checkSaveFlxG()
+	{
+		if (FlxG.save.data.mics == null)
+			FlxG.save.data.mics = 0;
+
+		FlxG.save.flush();
 	}
 
 	function checkSaveIni()
