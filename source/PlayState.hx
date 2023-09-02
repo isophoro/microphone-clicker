@@ -20,10 +20,11 @@ class PlayState extends FlxState
 
 		add(bg = new FlxSprite(0, 0).makeGraphic(FlxG.width, FlxG.height, FlxColor.GRAY));
 
-		add(mic = new FlxSprite(0, 0).loadGraphic("assets/images/microphone.png"));
+		add(mic = new FlxSprite(100, 0).loadGraphic("assets/images/microphone.png"));
 		mic.centerOrigin();
+		mic.angle = 26;
 		mic.updateHitbox();
-		mic.screenCenter();
+		mic.screenCenter(Y);
 	}
 
 	private var canClick(default, set):Bool = false;
