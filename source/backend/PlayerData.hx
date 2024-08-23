@@ -5,7 +5,10 @@ import flixel.FlxG;
 class PlayerData
 {
 	public static var mics:Int = 0;
-	public static var perSecond:Int = 0;
+	public static var micsLifeTime:Int = 0;
+
+	// i could automate this LOL
+	public static var buildings:Map<Buildings, Int> = [PRINTER => 0, RAPPER => 0, SWEATSHOP => 0, LAB => 0, FACTORY => 0];
 
 	public static function loadData():Void
 	{
@@ -13,12 +16,14 @@ class PlayerData
 
 		if (FlxG.save.data.mics == null)
 			FlxG.save.data.mics = 0;
-
-		if (FlxG.save.data.perSec == null)
-			FlxG.save.data.perSec = 0;
+		if (FlxG.save.data.micsLifeTime == null)
+			FlxG.save.data.micsLifeTime = 0;
+		if (FlxG.save.data.buildings == null)
+			FlxG.save.data.buildings = buildings;
 
 		mics = FlxG.save.data.mics;
-		perSecond = FlxG.save.data.perSec;
+		buildings = FlxG.save.data.buildings;
+		micsLifeTime = FlxG.save.data.micsLifeTime;
 
 		FlxG.save.flush();
 		FlxG.sound.soundTrayEnabled = false;
@@ -27,8 +32,18 @@ class PlayerData
 	public static function saveData():Void
 	{
 		FlxG.save.data.mics = mics;
-		FlxG.save.data.perSec = perSecond;
+		FlxG.save.data.buildings = buildings;
+		FlxG.save.data.micsLifeTime = micsLifeTime;
 
 		FlxG.save.flush();
 	}
+}
+
+enum Buildings
+{
+	PRINTER;
+	RAPPER;
+	SWEATSHOP;
+	LAB;
+	FACTORY;
 }

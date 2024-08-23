@@ -13,26 +13,35 @@ import flixel.tweens.FlxTween;
 import flixel.util.FlxColor;
 import flixel.util.FlxSpriteUtil;
 import flixel.util.FlxTimer;
-import hxIni.IniManager;
 import objects.Microphone;
-import sys.FileSystem;
+import openfl.Assets;
+import openfl.media.Sound;
 
 @:allow(MessageBoard)
 class PlayState extends FlxState
 {
+	public static var instance:PlayState;
+
 	var bg:FlxSprite;
 	var mic:Microphone;
 
 	public static var micPresses(default, set):Int = 0;
 	public static var hud:HUD;
 
-	public var perSecond:Int = 0;
-
 	var secondTimer:FlxTimer;
+	var timesRan:Int = 0;
 
 	override public function create()
 	{
 		super.create();
+
+		#if cpp
+		FlxG.sound.playMusic(AssetPaths.bg__ogg, 1, true);
+		#elseif html5
+		FlxG.sound.playMusic(AssetPaths.bg__mp3, 1, true);
+		#end
+
+		instance = this;
 
 		PlayerData.loadData();
 
@@ -41,17 +50,35 @@ class PlayState extends FlxState
 		mic.pressCallback = doMicPressedStuff;
 		mic.y += 50;
 
+		// more jank code woohoo!
 		secondTimer = new FlxTimer().start(1, function(tmr:FlxTimer)
 		{
-			microphoneAdd(perSecond);
+			// for some reason having another timer has a slight delay?
+			timesRan++;
+			if (timesRan == 5)
+			{
+				microphoneAdd(1 * PlayerData.buildings[PRINTER]);
+				timesRan = 0;
+			}
+
+			var additive = 0;
+
+			additive += PlayerData.buildings[RAPPER];
+			additive += 5 * PlayerData.buildings[SWEATSHOP];
+			additive += 35 * PlayerData.buildings[LAB];
+			additive += 230 * PlayerData.buildings[FACTORY];
+
+			microphoneAdd(additive);
 			secondTimer.reset(1);
 		});
 
 		add(hud = new HUD());
 
-		micPresses = PlayerData.mics;
-		perSecond = PlayerData.perSecond;
+		PlayState.micPresses = PlayerData.mics;
 		FlxG.stage.window.title = '$micPresses Microphones - Microphone Clicker';
+
+		hud.MSG_BOARD.initMessages();
+		hud.MSG_BOARD.updateMessage();
 	}
 
 	override public function update(elapsed:Float)
@@ -59,19 +86,12 @@ class PlayState extends FlxState
 		super.update(elapsed);
 	}
 
-	function perSecondAdd(addAmount:Int)
-	{
-		perSecond += addAmount;
-
-		PlayerData.perSecond = perSecond;
-		PlayerData.saveData();
-	}
-
 	function microphoneAdd(addAmount:Int)
 	{
 		micPresses += addAmount;
 		FlxG.stage.window.title = '$micPresses Microphones - Microphone Clicker';
 
+		PlayerData.micsLifeTime += addAmount;
 		PlayerData.mics = micPresses;
 		PlayerData.saveData();
 	}
@@ -79,6 +99,9 @@ class PlayState extends FlxState
 	function doMicPressedStuff()
 	{
 		microphoneAdd(1);
+
+		for (i in 0...hud.shopOptions.length)
+			hud.shopOptions[i].updateColors();
 
 		FlxG.sound.play("assets/sounds/clicked.wav");
 
@@ -118,6 +141,10 @@ class PlayState extends FlxState
 		micPresses = value;
 		hud.mics = value;
 		hud.updateText();
+
+		for (i in 0...hud.shopOptions.length)
+			hud.shopOptions[i].updateColors();
+
 		return value;
 	}
 }

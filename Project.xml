@@ -43,9 +43,9 @@
 	<!-- _______________________________ Libraries ______________________________ -->
 
 	<haxelib name="flixel" />
-	<haxelib name="hxIni" />
 	<haxelib name="flixel-addons" />
 	<haxelib name="flixel-ui" />
+
 
 	<!--In
 	case you want to use the addons package-->
